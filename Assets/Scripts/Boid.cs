@@ -18,12 +18,18 @@ public class Boid : MonoBehaviour
 
 	public void UpdatePosition()
 	{
-		transform.position += m_velocity * Time.fixedDeltaTime;
-		transform.position = BoidManager.Instance.GetWrappedPosition( transform.position );
-
 		Quaternion fromRotation = transform.rotation;
 		Quaternion toRotation = Quaternion.LookRotation( m_velocity, m_upAxis );
 		transform.rotation = Quaternion.RotateTowards( fromRotation, toRotation, 500 * Time.fixedDeltaTime );
+
+		float magnitude = m_velocity.magnitude;
+		magnitude = Mathf.Clamp( magnitude, BoidManager.Instance.m_minSpeed, BoidManager.Instance.m_maxSpeed );
+
+		Vector3 heading = transform.forward * magnitude * Time.fixedDeltaTime;
+		Vector3 newPosition = transform.position + heading;
+
+		transform.position = newPosition;
+		transform.position = BoidManager.Instance.GetWrappedPosition( transform.position );
 	}
 
 	public Vector3 GetBoidVelocity()
@@ -34,15 +40,6 @@ public class Boid : MonoBehaviour
 	public void SetBoidVelocity( Vector3 velocity )
 	{
 		m_velocity = velocity;
-		if ( m_velocity.sqrMagnitude > BoidManager.Instance.m_maxSpeed * BoidManager.Instance.m_maxSpeed )
-		{
-			m_velocity = m_velocity.normalized * BoidManager.Instance.m_maxSpeed;
-		}
-		else if ( m_velocity.sqrMagnitude < BoidManager.Instance.m_minSpeed * BoidManager.Instance.m_minSpeed )
-		{
-			m_velocity = m_velocity.normalized * BoidManager.Instance.m_minSpeed;
-		}
-
 		Vector3 normVelocity = m_velocity.normalized;
 		m_upAxis = Vector3.Cross( m_velocity, new Vector3( normVelocity.y, normVelocity.z, normVelocity.x ) );
 	}
