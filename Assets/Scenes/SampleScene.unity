@@ -151,9 +151,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_bounds: {fileID: 1729507565}
-  m_numBoids: 10
+  m_numBoids: 30
+  m_drawBoidAxis: 0
+  m_neighbourRadius: 10
   m_boidPrefab: {fileID: 3122623893542152658, guid: c089b5559f54b4e4fa294b7e6f61a997,
     type: 3}
+  m_updatePosition: 1
+  m_minSpeed: 0.1
+  m_maxSpeed: 2
+  m_enableSeparation: 1
+  m_drawSeparationDebugRays: 0
+  m_separationValue: 2
+  m_separationFactor: 1
+  m_enableAlignment: 1
+  m_drawAlignmentDebugRays: 0
+  m_alignmentFactor: 50
+  m_enableCohesion: 1
+  m_drawCohesionDebugRays: 0
+  m_cohesionFactor: 0.01
 --- !u!4 &514343861
 Transform:
   m_ObjectHideFlags: 0
@@ -356,6 +371,34 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1729507565, guid: a4c46ba8a05989a4d9a8abb9b8d81c5a, type: 3}
+      propertyPath: m_Size.x
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 1729507565, guid: a4c46ba8a05989a4d9a8abb9b8d81c5a, type: 3}
+      propertyPath: m_Center.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7092374794827343896, guid: a4c46ba8a05989a4d9a8abb9b8d81c5a,
+        type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 7092374795504328693, guid: a4c46ba8a05989a4d9a8abb9b8d81c5a,
+        type: 3}
+      propertyPath: m_LocalScale.x
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 7092374795565880251, guid: a4c46ba8a05989a4d9a8abb9b8d81c5a,
+        type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -10
+      objectReference: {fileID: 0}
+    - target: {fileID: 7092374795641407785, guid: a4c46ba8a05989a4d9a8abb9b8d81c5a,
+        type: 3}
+      propertyPath: m_LocalScale.x
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 7092374795828481226, guid: a4c46ba8a05989a4d9a8abb9b8d81c5a,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -415,6 +458,16 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: Bounds
+      objectReference: {fileID: 0}
+    - target: {fileID: 7092374795898844448, guid: a4c46ba8a05989a4d9a8abb9b8d81c5a,
+        type: 3}
+      propertyPath: m_LocalScale.x
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 7092374796127022954, guid: a4c46ba8a05989a4d9a8abb9b8d81c5a,
+        type: 3}
+      propertyPath: m_LocalScale.x
+      value: 2
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a4c46ba8a05989a4d9a8abb9b8d81c5a, type: 3}
