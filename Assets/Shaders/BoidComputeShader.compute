@@ -1,0 +1,39 @@
+﻿#pragma kernel FindNeighbour
+
+struct BoidPair
+{
+	float3 pos;
+	float3 vel;
+};
+
+int boidCount;
+
+float neighbourRadiusSqr;
+StructuredBuffer<BoidPair> boidBuffer;
+
+int neighbourBufferSize;
+RWStructuredBuffer<int> neighboursBuffer;
+
+[numthreads(16, 1, 1)]
+void FindNeighbour(uint3 id : SV_DispatchThreadID)
+{
+	// Already have the data for this pairing
+	if (id.x <= id.y)
+		return;
+
+	uint n = boidCount - id.y;
+	int subtractAmount = (n / 2) * (1 + n) - n;
+	int neighbourIndex = neighbourBufferSize - subtractAmount;
+	neighbourIndex = neighbourIndex + (id.x - id.y);
+	
+	float distanceSquared = length( boidBuffer[id.y].pos - boidBuffer[id.x].pos );
+	distanceSquared = distanceSquared * distanceSquared;
+	if (distanceSquared <= neighbourRadiusSqr)
+	{
+		neighboursBuffer[neighbourIndex] = 1;
+	}
+	else
+	{
+		neighboursBuffer[neighbourIndex] = 0;
+	}
+}

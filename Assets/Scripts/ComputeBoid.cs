@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Boid : MonoBehaviour
+public class ComputeBoid : MonoBehaviour
 {
 	private Vector3 m_velocity;
-	private List<Boid> m_neighbours = new List<Boid>();
+	private List<ComputeBoid> m_neighbours = new List<ComputeBoid>();
 
 	public void DrawDebugAxis()
 	{
@@ -16,21 +16,24 @@ public class Boid : MonoBehaviour
 
 	public void UpdatePosition()
 	{
+		if ( m_velocity == Vector3.zero )
+			m_velocity = transform.forward;
+
 		Vector3 normVelocity = m_velocity.normalized;
 		Vector3 upAxis = Vector3.Cross( m_velocity, new Vector3( m_velocity.y, m_velocity.z, m_velocity.x ) );
 
 		Quaternion fromRotation = transform.rotation;
 		Quaternion toRotation = Quaternion.LookRotation( m_velocity, upAxis.normalized );
-		transform.rotation = Quaternion.RotateTowards( fromRotation, toRotation, 500 * Time.fixedDeltaTime );
+		transform.rotation = Quaternion.RotateTowards( fromRotation, toRotation, 50 * Time.fixedDeltaTime );
 
 		float magnitude = m_velocity.magnitude;
-		magnitude = Mathf.Clamp( magnitude, BoidManager.Instance.m_minSpeed, BoidManager.Instance.m_maxSpeed );
+		magnitude = Mathf.Clamp( magnitude, ComputeBoidManager.Instance.m_minSpeed, ComputeBoidManager.Instance.m_maxSpeed );
 
-		Vector3 heading = transform.forward * magnitude * Time.fixedDeltaTime;
-		Vector3 newPosition = transform.position + heading;
+		m_velocity = transform.forward * magnitude;
+		Vector3 newPosition = transform.position + ( m_velocity * Time.fixedDeltaTime );
 
+		ComputeBoidManager.Instance.GetWrappedPosition( ref newPosition );
 		transform.position = newPosition;
-		transform.position = BoidManager.Instance.GetWrappedPosition( transform.position );
 	}
 
 	public Vector3 GetBoidVelocity()
@@ -43,7 +46,7 @@ public class Boid : MonoBehaviour
 		m_velocity = velocity;
 	}
 
-	public void AddNeighbour( Boid neighbour )
+	public void AddNeighbour( ComputeBoid neighbour )
 	{
 		m_neighbours.Add( neighbour );
 	}
@@ -58,9 +61,9 @@ public class Boid : MonoBehaviour
 		return m_neighbours.Count;
 	}
 
-	public IEnumerable<Boid> IterateNeighbours()
+	public IEnumerable<ComputeBoid> IterateNeighbours()
 	{
-		foreach ( Boid neighbour in m_neighbours )
+		foreach ( ComputeBoid neighbour in m_neighbours )
 		{
 			yield return neighbour;
 		}
