@@ -4,8 +4,20 @@ using UnityEngine;
 
 public class Boid : MonoBehaviour
 {
+	public float m_minSpeed = 2.0f;
+	public float m_maxSpeed = 6.0f;
+
+	public float m_aheadRange = 1.0f;
+
+	public List<Cell> m_cellsToCheck = null;
+
 	private Vector3 m_velocity;
 	private List<Boid> m_neighbours = new List<Boid>();
+
+	public void OnStart()
+	{
+		m_velocity = transform.forward * m_minSpeed;
+	}
 
 	public void DrawDebugAxis()
 	{
@@ -24,13 +36,12 @@ public class Boid : MonoBehaviour
 		transform.rotation = Quaternion.RotateTowards( fromRotation, toRotation, 500 * Time.fixedDeltaTime );
 
 		float magnitude = m_velocity.magnitude;
-		magnitude = Mathf.Clamp( magnitude, BoidManager.Instance.m_minSpeed, BoidManager.Instance.m_maxSpeed );
+		magnitude = Mathf.Clamp( magnitude, m_minSpeed, m_maxSpeed );
 
 		Vector3 heading = transform.forward * magnitude * Time.fixedDeltaTime;
 		Vector3 newPosition = transform.position + heading;
 
 		transform.position = newPosition;
-		transform.position = BoidManager.Instance.GetWrappedPosition( transform.position );
 	}
 
 	public Vector3 GetBoidVelocity()

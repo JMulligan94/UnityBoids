@@ -1,14 +1,15 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 public class BoidManager : MonoBehaviour
 {
-	public static BoidManager Instance;
-
+	[Header( "Boundary Settings" )]
 	public BoxCollider m_bounds;
+
+	public Vector3 m_numCells = new Vector3( 5, 5, 5 );
+	private Cell[] m_cells;
 	
-	public int m_numBoids = 10;
+	public int m_numBoids = 200;
 	
 	[Header("Boid Settings")]	
 	public bool m_drawBoidAxis = false;
@@ -18,50 +19,60 @@ public class BoidManager : MonoBehaviour
 	public GameObject m_boidPrefab;
 	public bool m_updatePosition = true;
 
-	public float m_minSpeed = 0.5f;
-	public float m_maxSpeed = 2.0f;
+	public float m_minSpeed = 2.0f;
+	public float m_maxSpeed = 6.0f;
 
 	[Header( "Separation Settings" )]
 	public bool m_enableSeparation = true;
-	public bool m_drawSeparationDebugRays = true;
+	public bool m_drawSeparationDebugRays = false;
 	[Tooltip( "The minimum amount of distance between any two boids" )]
 	public float m_separationValue = 2.0f;
 	[Tooltip( "How strong the force of separation is" )]
-	public float m_separationFactor = 1.0f;
+	public float m_separationFactor = 0.1f;
 
 	[Header( "Alignment Settings" )]
 	public bool m_enableAlignment = true;
-	public bool m_drawAlignmentDebugRays = true;
+	public bool m_drawAlignmentDebugRays = false;
 	public float m_alignmentFactor = 50.0f;
 
 	[Header( "Cohesion Settings" )]
 	public bool m_enableCohesion = true;
-	public bool m_drawCohesionDebugRays = true;
+	public bool m_drawCohesionDebugRays = false;
 	public float m_cohesionFactor = 0.01f;
+
+	[Header( "Avoidance Settings" )]
+	public bool m_enableAvoidance = true;
+	public bool m_drawAvoidanceDebugRays = false;
+	public float m_avoidanceFactor = 1.0f;
+	public float m_avoidanceDistance = 0.1f;
 
 	Boid[] m_boids;
 	Vector3 m_minBounds;
 	Vector3 m_maxBounds;
 
-	// Start is called before the first frame update
-	void Start()
-	{
-		if ( Instance == null )
-			Instance = this;
+	[Header( "Obstacles" )]
+	public Obstacle[] m_obstacles; 
 
+
+	void Awake()
+	{
 		m_minBounds = m_bounds.transform.position + m_bounds.center - ( m_bounds.size / 2.0f );
 		m_maxBounds = m_bounds.transform.position + m_bounds.center + ( m_bounds.size / 2.0f );
 
 		GenerateBoids();
+		GenerateCells();
 	}
 	
 	void FixedUpdate()
 	{
-		// Find boids neighbours
-		PerformNeighbourSearch();
-
 		if ( !m_updatePosition )
 			return;
+
+		// Sort boids into cells
+		SortBoidsIntoCells();
+
+		// Find boids neighbours
+		PerformNeighbourSearch();
 		
 		for ( int i = 0; i < m_boids.Length; ++i )
 		{
@@ -111,16 +122,99 @@ public class BoidManager : MonoBehaviour
 				newVelocity += cohesion * m_cohesionFactor;
 			}
 
+			// 4) AVOIDANCE
+			if ( m_obstacles.Length > 0 )
+			{
+				Vector3 avoidance = Vector3.zero;
+				if ( m_enableAvoidance )
+				{
+					avoidance = CalculateAvoidance( i );
+					if ( m_drawAvoidanceDebugRays
+						&& avoidance.sqrMagnitude > 0.0f )
+					{
+						DrawRay( boid, avoidance, Color.yellow );
+					}
+
+					newVelocity += avoidance * m_avoidanceFactor;
+				}
+			}
 
 			if ( m_drawBoidAxis )
 			{
 				boid.DrawDebugAxis();
 			}
-				
-			boid.SetBoidVelocity( newVelocity );
+
+			if ( newVelocity.sqrMagnitude > 0 )
+			{
+				boid.SetBoidVelocity( newVelocity );
+			}
+
 			boid.UpdatePosition();
 			boid.ClearNeighbours();
 		}
+	}
+
+	private void SortBoidsIntoCells()
+	{
+		return;
+		// Clear all boids from their cells
+		foreach ( Cell cell in m_cells )
+		{
+			cell.Clear();
+		}
+
+		List<int> integers = new List<int>();
+		int boidIndex = 0;
+		foreach ( Boid boid in m_boids )
+		{
+			boid.m_cellsToCheck.Clear();
+			integers.Add( boidIndex++ );
+		}
+
+		// Sort boids by axes 
+		int[] sortedByX = integers.ToArray();
+		int[] sortedByY = integers.ToArray();
+		int[] sortedByZ = integers.ToArray();
+
+		System.Array.Sort( sortedByX, ( delegate ( int x, int y )
+		{
+			return m_boids[ x ].transform.position.x.CompareTo( m_boids[ y ].transform.position.x );
+		} ) );
+		System.Array.Sort( sortedByY, ( delegate ( int x, int y )
+		{
+			return m_boids[ x ].transform.position.y.CompareTo( m_boids[ y ].transform.position.y );
+		} ) );
+		System.Array.Sort( sortedByZ, ( delegate ( int x, int y )
+		{
+			return m_boids[ x ].transform.position.z.CompareTo( m_boids[ y ].transform.position.z );
+		} ) );
+
+		int cellIndex = 0;
+		for ( int x = 0; x < ( int )m_numCells.x; ++x )
+		{
+			for ( int y = 0; y < ( int )m_numCells.y; ++y )
+			{
+				for ( int z = 0; z < ( int )m_numCells.z; ++z )
+				{
+					Cell cell = m_cells[ cellIndex ];
+
+					cellIndex++;
+				}
+			}
+		}
+
+		//foreach ( Boid boid in m_boids )
+		//{
+
+		//	Vector3 boidPos = boid.transform.position;
+
+		//	Vector3 boidMin = boidPos - new Vector3( m_neighbourRadius, m_neighbourRadius, m_neighbourRadius );
+		//	Vector3 boidMax = boidPos + new Vector3( m_neighbourRadius, m_neighbourRadius, m_neighbourRadius );
+
+		//	// Check aligned to x axis
+			
+			
+		//}
 	}
 
 	private void PerformNeighbourSearch()
@@ -209,6 +303,27 @@ public class BoidManager : MonoBehaviour
 		return cohesionForce;
 	}
 
+	// AVOIDANCE: Steering to avoid any obstacles in the scene
+	private Vector3 CalculateAvoidance( int boidIndex )
+	{
+		Boid boid = m_boids[ boidIndex ];
+
+		Vector3 aheadVector = boid.GetBoidVelocity().normalized * m_avoidanceDistance;
+		Vector3 aheadPosition = boid.transform.position + aheadVector;
+
+		Vector3 avoidanceForce = Vector3.zero;
+		foreach ( Obstacle obstacle in m_obstacles )
+		{
+			Vector3 obstacleAvoidance = Vector3.zero;
+			if ( obstacle.CollidesWith( aheadPosition, out obstacleAvoidance ) )
+			{
+				avoidanceForce += obstacleAvoidance;
+			}
+		}
+		avoidanceForce.Normalize();
+		return avoidanceForce;
+	}
+
 	private void GenerateBoids()
 	{
 		m_boids = new Boid[ m_numBoids ];
@@ -223,6 +338,44 @@ public class BoidManager : MonoBehaviour
 			GameObject boidObj = Instantiate( m_boidPrefab, randomPosition, randomRotation, transform );
 			boidObj.name = "Boid_" + i;
 			m_boids[ i ] = boidObj.GetComponent<Boid>();
+		}
+	}
+
+	private void GenerateCells()
+	{
+		int arraySize = ( int )m_numCells.x * ( int )m_numCells.y * ( int )m_numCells.z;
+		m_cells = new Cell[ arraySize ];
+
+		float xStartValue = m_minBounds.x;
+		float xInterval = ( m_maxBounds.x - m_minBounds.x ) / m_numCells.x;
+
+		float yStartValue = m_minBounds.y;
+		float yInterval = ( m_maxBounds.y - m_minBounds.y ) / m_numCells.y;
+
+		float zStartValue = m_minBounds.z;
+		float zInterval = ( m_maxBounds.z - m_minBounds.z ) / m_numCells.z;
+
+		float xCurrentValue = xStartValue;
+		float yCurrentValue = yStartValue;
+		float zCurrentValue = zStartValue;
+
+		int cellNumber = 0;
+		for ( int x = 0; x < ( int )m_numCells.x; ++x )
+		{
+			yCurrentValue = yStartValue;
+			for ( int y = 0; y < ( int )m_numCells.y; ++y )
+			{
+				zCurrentValue = zStartValue;
+				for ( int z = 0; z < ( int )m_numCells.z; ++z )
+				{
+					m_cells[ cellNumber ] = new Cell( new Vector3( xCurrentValue, yCurrentValue, zCurrentValue ), new Vector3( xInterval, yInterval, zInterval ) );
+
+					cellNumber++;
+					zCurrentValue += zInterval;
+				}
+				yCurrentValue += yInterval;
+			}
+			xCurrentValue += xInterval;
 		}
 	}
 
@@ -279,5 +432,16 @@ public class BoidManager : MonoBehaviour
 		}
 
 		return wrappedPosition;
+	}
+
+	void OnDrawGizmos()
+	{
+		if ( m_cells == null )
+			return;
+
+		foreach ( Cell cell in m_cells )
+		{
+			cell.OnDrawGizmos();
+		}
 	}
 }
